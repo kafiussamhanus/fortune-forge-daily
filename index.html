@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,7 @@
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f0f0; color: #333; }
     h1 { color: #4a90e2; }
     input, select { padding: 10px; margin: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
-    button { padding: 12px 24px; font-size: 18px; background: #4a90e2; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button { padding: 12px 24px; font-size: 18px; background: #4a90e2; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
     button:hover { background: #357abd; }
     #result { margin-top: 30px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
     .quote { font-style: italic; font-size: 18px; color: #27ae60; }
@@ -18,14 +18,14 @@
 </head>
 <body>
   <h1>🔮 Fortune Forge Daily</h1>
-  <p>Masukkan zodiak atau mood lo buat fortune crypto-themed hari ini!</p>
+  <p>Enter your zodiac or mood for a crypto-themed fortune today!</p>
   
   <select id="inputType">
-    <option value="zodiac">Zodiak (e.g., Aries)</option>
+    <option value="zodiac">Zodiac (e.g., Aries)</option>
     <option value="mood">Mood (e.g., Bullish)</option>
   </select>
   <br>
-  <input type="text" id="userInput" placeholder="Masukkan zodiak/mood lo..." maxlength="20">
+  <input type="text" id="userInput" placeholder="Enter your zodiac/mood..." maxlength="20">
   <br>
   <button id="generateBtn">Generate Fortune!</button>
   
@@ -33,13 +33,15 @@
     <div class="quote" id="quote"></div>
     <div class="lyric" id="lyric"></div>
     <div class="streak" id="streak"></div>
-    <button id="shareBtn" style="margin-top: 10px;">Share ke Cast!</button>
+    <button id="shareBtn">Share to Cast!</button>
+    <button id="mintBtn" style="background: #e74c3c;">Mint for $0.1 (Coming Soon)</button>
   </div>
 
-  <script type="module">
-    import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk'
+  <script>
+    // Fallback without SDK - works in any browser
+    let isFarcaster = false; // Detect later
 
-    // Array quotes crypto-themed (12 item, biar gampang randomize)
+    // Arrays
     const quotes = [
       "HODL through the dip, moonshot awaits! 💎🙌",
       "Bullish vibes: ETH will pump harder than your coffee.",
@@ -52,10 +54,9 @@
       "Daily gem: Altcoins rise when majors sleep.",
       "Personal twist: Your wallet's about to glow up.",
       "Crypto wisdom: Volatility is the price of freedom.",
-      "Hari ini: Trade smart, not hard—fortune favors the bold."
+      "Today: Trade smart, not hard—fortune favors the bold."
     ];
 
-    // Array lirik remix sederhana (12 item, versi lagu populer di-twist crypto)
     const lyrics = [
       "When ETH pumps, we all get rich... (ala Taylor Swift)",
       "Shake it off, shake off the FUD... (ala Taylor Swift)",
@@ -71,50 +72,67 @@
       "Drag me down? Nah, only pumps... (ala One Direction)"
     ];
 
-    // Fungsi generate fortune
-    async function generateFortune() {
+    function generateFortune() {
+      console.log('Button clicked!'); // Debug - check in console
       const input = document.getElementById('userInput').value.trim().toLowerCase();
       if (!input) {
-        alert('Masukin zodiak atau mood dulu dong! 😊');
+        alert('Enter your zodiac or mood first! 😊');
         return;
       }
 
-      // Get user info dari SDK buat personalize
-      const user = await sdk.user();
-      const fid = user?.fid || 0; // FID buat seed randomize
+      let fid = Math.floor(Math.random() * 1000000); // Fallback random FID
+      if (isFarcaster) {
+        // Try SDK if in Farcaster
+        if (window.farcaster && window.farcaster.user) {
+          fid = window.farcaster.user.fid || fid;
+        }
+      }
 
-      // Seed berdasarkan date hari ini + FID + input buat "daily unique"
-      const today = new Date().toDateString(); // e.g., "Mon Nov 04 2025"
+      const today = new Date().toDateString(); // Nov 04 2025
       const seed = (today + fid + input).split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
       const index = Math.abs(seed) % quotes.length;
 
-      // Tampilkan hasil
       document.getElementById('quote').textContent = quotes[index];
       document.getElementById('lyric').textContent = lyrics[index];
-      
-      // Streak sederhana (cuma contoh, based on date)
-      const streak = Math.floor(Math.random() * 7) + 1; // Random 1-7 hari
-      document.getElementById('streak').textContent = `Streak: ${streak} hari lo udah HODL! 🔥`;
-
+      const streak = Math.floor(Math.random() * 7) + 1;
+      document.getElementById('streak').textContent = `Streak: ${streak} days you're HODLing! 🔥`;
       document.getElementById('result').style.display = 'block';
-      document.getElementById('generateBtn').textContent = 'Generate Lagi!';
+      document.getElementById('generateBtn').textContent = 'Generate Again!';
+      console.log('Generated! Quote:', quotes[index]); // Debug
     }
 
-    // Event listener buat button generate
-    document.getElementById('generateBtn').addEventListener('click', generateFortune);
+    // Attach event after DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Page loaded!');
+      const btn = document.getElementById('generateBtn');
+      if (btn) {
+        btn.addEventListener('click', generateFortune);
+        console.log('Event attached!');
+      }
 
-    // Share button (pake SDK buat post ke feed, optional)
-    document.getElementById('shareBtn').addEventListener('click', async () => {
-      const quote = document.getElementById('quote').textContent;
-      const lyric = document.getElementById('lyric').textContent;
-      await sdk.actions.post({ text: `Fortune hari ini: "${quote}" ${lyric} #FortuneForge` });
-      alert('Shared ke cast! 🚀');
-    });
+      // Detect Farcaster context
+      if (window.farcaster) {
+        isFarcaster = true;
+        window.farcaster.ready(); // SDK ready
+        console.log('Farcaster detected!');
+      }
 
-    // Init app: Siapin splash hilang
-    document.addEventListener('DOMContentLoaded', async () => {
-      await sdk.actions.ready(); // Hilangin splash screen
-      // Optional: Auto-generate kalo ada input default
+      // Share fallback
+      document.getElementById('shareBtn').addEventListener('click', function() {
+        const quote = document.getElementById('quote').textContent;
+        const lyric = document.getElementById('lyric').textContent;
+        const text = `Today's fortune: "${quote}" ${lyric} #FortuneForge`;
+        if (isFarcaster && window.farcaster.actions.post) {
+          window.farcaster.actions.post({ text: text });
+        } else {
+          alert('Copy to share: ' + text);
+        }
+      });
+
+      // Mint placeholder
+      document.getElementById('mintBtn').addEventListener('click', function() {
+        alert('Mint for $0.1 coming soon!');
+      });
     });
   </script>
 </body>
