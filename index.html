@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fortune Forge Daily</title>
-  <!-- Farcaster Embed Metadata -->
+  <!-- Farcaster vNext Metadata - Ini yang bikin "No embed found" hilang -->
   <meta property="fc:frame" content="vNext" />
-  <meta property="fc:frame:image" content="https://i.imgur.com/crystalball.png" /> <!-- Icon default, ganti kalo punya -->
+  <meta property="fc:frame:image" content="https://i.imgur.com/abc123.png" /> <!-- Ganti link icon lo -->
   <meta property="fc:frame:button:1" content="Generate Fortune" />
   <meta property="fc:frame:button:1:action" content="post" />
+  <meta property="fc:frame:button:1:target" content="https://your-app.vercel.app" /> <!-- Ganti URL lo -->
   <meta property="og:title" content="🔮 Fortune Forge Daily" />
-  <meta property="og:description" content="Crypto-themed fortune generator!" />
-  <meta property="og:image" content="https://i.imgur.com/crystalball.png" />
+  <meta property="og:description" content="Crypto fortune generator!" />
+  <meta property="og:image" content="https://i.imgur.com/abc123.png" /> <!-- Ganti link icon lo -->
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f0f0; color: #333; }
     h1 { color: #4a90e2; }
@@ -45,10 +46,15 @@
     <button id="mintBtn" style="background: #e74c3c;">Mint for $0.1 (Coming Soon)</button>
   </div>
 
-  <script>
-    // Plain JS fallback - always works
-    let fid = Math.floor(Math.random() * 1000000); // Default random
-    let sdk = null;
+  <script type="module">
+    import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk@0.0.1';
+    
+    // Call ready() segera buat hilangin splash & detect embed
+    await sdk.actions.ready();
+
+    // Get FID
+    const user = await sdk.user();
+    let fid = user?.fid || Math.floor(Math.random() * 1000000);
 
     // Arrays
     const quotes = [
@@ -81,16 +87,15 @@
       "Drag me down? Nah, only pumps... (ala One Direction)"
     ];
 
-    function generateFortune() {
-      console.log('Generate clicked!'); // Debug in console
+    // Generate
+    document.getElementById('generateBtn').addEventListener('click', () => {
       const input = document.getElementById('userInput').value.trim().toLowerCase();
       if (!input) {
         alert('Enter your zodiac or mood first! 😊');
         return;
       }
 
-      // Use FID if available
-      const today = new Date().toDateString(); // Nov 04 2025
+      const today = new Date().toDateString();
       const seed = (today + fid + input).split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
       const index = Math.abs(seed) % quotes.length;
 
@@ -100,37 +105,18 @@
       document.getElementById('streak').textContent = `Streak: ${streak} days you're HODLing! 🔥`;
       document.getElementById('result').style.display = 'block';
       document.getElementById('generateBtn').textContent = 'Generate Again!';
-      console.log('Generated! Index:', index);
-    }
+    });
 
-    function shareFortune() {
+    // Share
+    document.getElementById('shareBtn').addEventListener('click', async () => {
       const quote = document.getElementById('quote').textContent;
       const lyric = document.getElementById('lyric').textContent;
-      const text = `Today's fortune: "${quote}" ${lyric} #FortuneForge`;
-      if (sdk) {
-        sdk.actions.post({ text: text }).then(() => alert('Shared to cast! 🚀'));
-      } else {
-        alert('Copy to share: ' + text);
-      }
-    }
-
-    // DOM ready
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM ready!');
-      document.getElementById('generateBtn').addEventListener('click', generateFortune);
-      document.getElementById('shareBtn').addEventListener('click', shareFortune);
-      document.getElementById('mintBtn').addEventListener('click', () => alert('Mint for $0.1 coming soon!'));
-
-      // Try SDK only in Farcaster context
-      if (window.farcaster) {
-        import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk: s }) => {
-          sdk = s;
-          s.actions.ready();
-          s.user().then(user => fid = user.fid || fid);
-          console.log('SDK loaded in Farcaster!');
-        }).catch(e => console.error('SDK fail:', e));
-      }
+      await sdk.actions.post({ text: `Today's fortune: "${quote}" ${lyric} #FortuneForge` });
+      alert('Shared to cast! 🚀');
     });
+
+    // Mint
+    document.getElementById('mintBtn').addEventListener('click', () => alert('Mint for $0.1 coming soon!'));
   </script>
 </body>
 </html>
