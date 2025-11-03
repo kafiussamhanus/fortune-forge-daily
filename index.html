@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fortune Forge Daily</title>
-  <!-- Farcaster Embed Meta (JSON from docs) -->
-  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://i.imgur.com/BruCg8V.png","button":{"title":"Generate Fortune","action":{"type":"launch_frame","name":"Fortune Forge Daily","url":"https://e-forge-daily.vercel.app","splashImageUrl":"https://i.imgur.com/BruCg8V.png","splashBackgroundColor":"#f0f0f0"}}}' />
+  <!-- Farcaster Embed Meta - JSON v1 schema from docs -->
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://i.imgur.com/BruCg8V.png","button":{"title":"Generate Fortune","action":{"type":"launch_frame","name":"Fortune Forge Daily","url":"https://fortune-forge-daily-pkn6kj34l-alkafi-samhan-hindamis-projects.vercel.app/","splashImageUrl":"https://i.imgur.com/BruCg8V.png","splashBackgroundColor":"#f0f0f0"}}}'>
   <meta property="og:title" content="🔮 Fortune Forge Daily" />
   <meta property="og:description" content="Crypto-themed fortune generator!" />
   <meta property="og:image" content="https://i.imgur.com/BruCg8V.png" />
@@ -43,7 +43,7 @@
   </div>
 
   <script>
-    // Plain JS - Jalan di browser + Farcaster
+    // Plain JS fallback - Generate jalan di browser
     let fid = Math.floor(Math.random() * 1000000);
     let sdk = null;
 
@@ -85,7 +85,7 @@
         return;
       }
 
-      const today = new Date().toDateString(); // Nov 04 2025
+      const today = new Date().toDateString(); // November 04, 2025
       const seed = (today + fid + input).split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
       const index = Math.abs(seed) % quotes.length;
 
@@ -102,7 +102,8 @@
       const lyric = document.getElementById('lyric').textContent;
       const text = `Today's fortune: "${quote}" ${lyric} #FortuneForge`;
       if (sdk) {
-        sdk.actions.post({ text: text }).then(() => alert('Shared to cast! 🚀'));
+        sdk.actions.post({ text: text });
+        alert('Shared to cast! 🚀');
       } else {
         alert('Copy to share: ' + text);
       }
@@ -114,9 +115,10 @@
       document.getElementById('shareBtn').addEventListener('click', shareFortune);
       document.getElementById('mintBtn').addEventListener('click', () => alert('Mint for $0.1 coming soon!'));
 
-      // SDK only in Farcaster
+      // SDK load if in Farcaster
       if (window.farcaster) {
         const script = document.createElement('script');
+        script.type = 'module';
         script.src = 'https://esm.sh/@farcaster/miniapp-sdk';
         script.onload = () => {
           import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk: s }) => {
