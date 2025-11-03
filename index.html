@@ -4,15 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fortune Forge Daily</title>
-  <!-- Farcaster vNext Metadata - Ini yang bikin "No embed found" hilang -->
-  <meta property="fc:frame" content="vNext" />
-  <meta property="fc:frame:image" content="https://i.imgur.com/abc123.png" /> <!-- Ganti link icon lo -->
-  <meta property="fc:frame:button:1" content="Generate Fortune" />
-  <meta property="fc:frame:button:1:action" content="post" />
-  <meta property="fc:frame:button:1:target" content="https://your-app.vercel.app" /> <!-- Ganti URL lo -->
+  <!-- Farcaster Embed Meta (JSON from docs) -->
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://i.imgur.com/BruCg8V.png","button":{"title":"Generate Fortune","action":{"type":"launch_frame","name":"Fortune Forge Daily","url":"https://e-forge-daily.vercel.app","splashImageUrl":"https://i.imgur.com/BruCg8V.png","splashBackgroundColor":"#f0f0f0"}}}' />
   <meta property="og:title" content="🔮 Fortune Forge Daily" />
-  <meta property="og:description" content="Crypto fortune generator!" />
-  <meta property="og:image" content="https://i.imgur.com/abc123.png" /> <!-- Ganti link icon lo -->
+  <meta property="og:description" content="Crypto-themed fortune generator!" />
+  <meta property="og:image" content="https://i.imgur.com/BruCg8V.png" />
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f0f0; color: #333; }
     h1 { color: #4a90e2; }
@@ -46,15 +42,10 @@
     <button id="mintBtn" style="background: #e74c3c;">Mint for $0.1 (Coming Soon)</button>
   </div>
 
-  <script type="module">
-    import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk@0.0.1';
-    
-    // Call ready() segera buat hilangin splash & detect embed
-    await sdk.actions.ready();
-
-    // Get FID
-    const user = await sdk.user();
-    let fid = user?.fid || Math.floor(Math.random() * 1000000);
+  <script>
+    // Plain JS - Jalan di browser + Farcaster
+    let fid = Math.floor(Math.random() * 1000000);
+    let sdk = null;
 
     // Arrays
     const quotes = [
@@ -87,15 +78,14 @@
       "Drag me down? Nah, only pumps... (ala One Direction)"
     ];
 
-    // Generate
-    document.getElementById('generateBtn').addEventListener('click', () => {
+    function generateFortune() {
       const input = document.getElementById('userInput').value.trim().toLowerCase();
       if (!input) {
         alert('Enter your zodiac or mood first! 😊');
         return;
       }
 
-      const today = new Date().toDateString();
+      const today = new Date().toDateString(); // Nov 04 2025
       const seed = (today + fid + input).split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
       const index = Math.abs(seed) % quotes.length;
 
@@ -105,18 +95,39 @@
       document.getElementById('streak').textContent = `Streak: ${streak} days you're HODLing! 🔥`;
       document.getElementById('result').style.display = 'block';
       document.getElementById('generateBtn').textContent = 'Generate Again!';
-    });
+    }
 
-    // Share
-    document.getElementById('shareBtn').addEventListener('click', async () => {
+    function shareFortune() {
       const quote = document.getElementById('quote').textContent;
       const lyric = document.getElementById('lyric').textContent;
-      await sdk.actions.post({ text: `Today's fortune: "${quote}" ${lyric} #FortuneForge` });
-      alert('Shared to cast! 🚀');
-    });
+      const text = `Today's fortune: "${quote}" ${lyric} #FortuneForge`;
+      if (sdk) {
+        sdk.actions.post({ text: text }).then(() => alert('Shared to cast! 🚀'));
+      } else {
+        alert('Copy to share: ' + text);
+      }
+    }
 
-    // Mint
-    document.getElementById('mintBtn').addEventListener('click', () => alert('Mint for $0.1 coming soon!'));
+    // DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('generateBtn').addEventListener('click', generateFortune);
+      document.getElementById('shareBtn').addEventListener('click', shareFortune);
+      document.getElementById('mintBtn').addEventListener('click', () => alert('Mint for $0.1 coming soon!'));
+
+      // SDK only in Farcaster
+      if (window.farcaster) {
+        const script = document.createElement('script');
+        script.src = 'https://esm.sh/@farcaster/miniapp-sdk';
+        script.onload = () => {
+          import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk: s }) => {
+            sdk = s;
+            s.actions.ready(); // Hilangin splash
+            s.user().then(user => fid = user.fid || fid);
+          });
+        };
+        document.head.appendChild(script);
+      }
+    });
   </script>
 </body>
 </html>
