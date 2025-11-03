@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fortune Forge Daily</title>
-  <!-- Farcaster Embed Meta - JSON v1 schema from docs -->
-  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://i.imgur.com/BruCg8V.png","button":{"title":"Generate Fortune","action":{"type":"launch_frame","name":"Fortune Forge Daily","url":"https://fortune-forge-daily-pkn6kj34l-alkafi-samhan-hindamis-projects.vercel.app/","splashImageUrl":"https://i.imgur.com/BruCg8V.png","splashBackgroundColor":"#f0f0f0"}}}'>
+  <!-- Farcaster Embed Meta - JSON v1 exact from docs -->
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://via.placeholder.com/600x400/4a90e2/ffffff?text=Fortune","button":{"title":"Generate Fortune","action":{"type":"launch_frame","name":"Fortune Forge Daily","url":"https://fortune-forge-daily-pkn6kj34l-alkafi-samhan-hindamis-projects.vercel.app/","splashImageUrl":"https://via.placeholder.com/600x400/4a90e2/ffffff?text=Fortune","splashBackgroundColor":"#f0f0f0"}}}'>
   <meta property="og:title" content="🔮 Fortune Forge Daily" />
   <meta property="og:description" content="Crypto-themed fortune generator!" />
-  <meta property="og:image" content="https://i.imgur.com/BruCg8V.png" />
+  <meta property="og:image" content="https://via.placeholder.com/600x400/4a90e2/ffffff?text=Fortune" />
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f0f0; color: #333; }
     h1 { color: #4a90e2; }
@@ -43,11 +43,10 @@
   </div>
 
   <script>
-    // Plain JS fallback - Generate jalan di browser
+    // Plain JS - Generate jalan selalu
     let fid = Math.floor(Math.random() * 1000000);
     let sdk = null;
 
-    // Arrays
     const quotes = [
       "HODL through the dip, moonshot awaits! 💎🙌",
       "Bullish vibes: ETH will pump harder than your coffee.",
@@ -109,24 +108,22 @@
       }
     }
 
-    // DOM ready
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('generateBtn').addEventListener('click', generateFortune);
       document.getElementById('shareBtn').addEventListener('click', shareFortune);
       document.getElementById('mintBtn').addEventListener('click', () => alert('Mint for $0.1 coming soon!'));
 
-      // SDK load if in Farcaster
+      // SDK for Farcaster
       if (window.farcaster) {
         const script = document.createElement('script');
         script.type = 'module';
-        script.src = 'https://esm.sh/@farcaster/miniapp-sdk';
-        script.onload = () => {
-          import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk: s }) => {
-            sdk = s;
-            s.actions.ready(); // Hilangin splash
-            s.user().then(user => fid = user.fid || fid);
-          });
-        };
+        script.innerHTML = `
+          import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+          window.sdk = sdk;
+          await sdk.actions.ready();
+          const user = await sdk.user();
+          window.fid = user.fid || Math.floor(Math.random() * 1000000);
+        `;
         document.head.appendChild(script);
       }
     });
